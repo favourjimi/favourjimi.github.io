@@ -22,8 +22,8 @@ body{background:#000;color:var(--text);font-family:'DM Sans',sans-serif;overflow
 .glass-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,70,.4),transparent);}
 
 /* MATRIX CANVAS */
-#matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.5;}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.77);z-index:1;pointer-events:none;}
+#matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.35;will-change:transform;transform:translateZ(0);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1;pointer-events:none;}
 
 /* NAV */
 nav{position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1rem 3rem;border-bottom:1px solid rgba(0,255,70,.12);background:rgba(0,0,0,.85);backdrop-filter:blur(14px);}
@@ -257,7 +257,7 @@ textarea.form-input{resize:none;height:80px;}
     <li><a href="#skills">Skills</a></li>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#experience">Experience</a></li>
-    <li><a href="#chat">Chat</a></li>
+
     <li><a href="#contact">Contact</a></li>
   </ul>
 </nav>
@@ -458,33 +458,9 @@ textarea.form-input{resize:none;height:80px;}
   </div>
 </section>
 
-<!-- CHAT SECTION -->
-<section class="chat-section" id="chat">
-  <canvas id="scales"></canvas>
-  <div class="dark-vignette"></div>
-  <div class="chat-content">
-    <p class="section-label" style="position:relative;z-index:10;">// say hello</p>
-    <h2 class="section-title" style="position:relative;z-index:10;text-align:center;">Chat With Me</h2>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:.78rem;color:#64748b;text-align:center;line-height:1.6;position:relative;z-index:10;">Ask me anything — about my projects, skills, experience,<br>or just say hi. Powered by AI.</p>
-    <div class="chat-window">
-      <div class="chat-topbar">
-        <div class="chat-dots"><div class="cdot cdot-r"></div><div class="cdot cdot-y"></div><div class="cdot cdot-g"></div></div>
-        <span class="chat-title">favour_ai_assistant.exe</span>
-        <div class="chat-status"><div class="status-dot"></div>online</div>
-      </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="msg bot">
-          <div class="msg-avatar bot">FA</div>
-          <div class="msg-bubble">Hey there! 👋 I'm Favour's AI assistant. Ask me anything about him — his projects, skills, experience, or what he's currently working on!</div>
-        </div>
-      </div>
-      <div class="chat-input-row">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Ask me anything about Favour..." maxlength="200"/>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send →</button>
-      </div>
-    </div>
-  </div>
-</section>
+
+<!-- FLOATING CHAT BUBBLE -->
+
 
 <!-- CONTACT -->
 <section class="contact" id="contact">
@@ -619,22 +595,69 @@ About Favour:
 - GitHub: github.com/favourjimi | Email: favouradejimi7@gmail.com
 - Open to software engineering internship opportunities`;
 
-const chatHistory=[];
+// Smart demo responses based on keywords
+const demoResponses = [
+  {
+    keys: ['skill','know','language','tech','stack','code','program'],
+    reply: "Favour is skilled in Java, Python, C, C++, and JavaScript, with experience in MySQL, PostgreSQL, RESTful APIs, and tools like Git, Maven, and VS Code. He's also learning React, Node.js, and Spring Boot! 💻"
+  },
+  {
+    keys: ['project','built','made','build','work on','game','compiler','chatbot','task'],
+    reply: "Favour has built some cool stuff! Highlights include a Space Invaders web game (live on GitHub Pages), a compiler for the Tiny language achieving LL(1) bonus, a Task Manager app with Java & MySQL, and a RAG chatbot using Cohere API. Check the Projects section above! 🚀"
+  },
+  {
+    keys: ['experience','work','job','intern','outlier','lionbridge','aurora','qa','test'],
+    reply: "Favour has worked as an AI Data Contributor at Outlier (2024–present), and as a Game Tester (QA) at both Lionbridge and Aurora Studio. He's actively seeking software engineering internship opportunities! 🎯"
+  },
+  {
+    keys: ['school','study','university','windsor','course','degree','education','graduate'],
+    reply: "Favour is studying Computer Science (Software Engineering) at the University of Windsor, expected to graduate in April 2028. He's covered DSA, Operating Systems, Compiler Construction, Database Management, OOP, and more! 🎓"
+  },
+  {
+    keys: ['drum','music','game','gaming','hobby','stream','fun','outside','life'],
+    reply: "Outside of coding, Favour is a passionate drummer and avid gamer. He's even considering launching a streaming channel because of how confident he feels in his gaming skills! 🥁🎮"
+  },
+  {
+    keys: ['contact','reach','email','hire','available','opportunity','internship','linkedin','github'],
+    reply: "You can reach Favour at favouradejimi7@gmail.com or connect on LinkedIn and GitHub (favourjimi). He's currently open to software engineering internship opportunities — don't hesitate to reach out! 📬"
+  },
+  {
+    keys: ['cert','certification','devops','azure','postgresql','java cert'],
+    reply: "Favour holds certifications in DevOps Concepts, Intermediate Java, Querying PostgreSQL in Java, and Intro to Relational Databases in SQL. Always leveling up! 📜"
+  },
+  {
+    keys: ['who','about','yourself','tell me','introduce','favour','name'],
+    reply: "Favour Adejimi is a CS (Software Engineering) student at the University of Windsor — diligent in the classroom, creative in the code editor, and passionate about building software that works and looks great. A software engineer in the making! ⚡"
+  },
+  {
+    keys: ['hello','hi','hey','sup','yo','what\'s up','greet'],
+    reply: "Hey there! 👋 Great to meet you! I'm Favour's AI assistant. Ask me anything about him — his projects, skills, experience, or background. What would you like to know?"
+  }
+];
+
+function getDemoReply(text) {
+  const lower = text.toLowerCase();
+  for (const item of demoResponses) {
+    if (item.keys.some(k => lower.includes(k))) return item.reply;
+  }
+  return "That's a great question! For a more detailed answer, feel free to reach out to Favour directly at favouradejimi7@gmail.com — he'd love to connect. 😊 You can also explore the sections above to learn more about his projects, skills, and experience!";
+}
+
 async function sendMessage(){
   const input=document.getElementById('chatInput'),btn=document.getElementById('sendBtn'),container=document.getElementById('chatMessages');
   const text=input.value.trim();if(!text)return;
   container.innerHTML+=`<div class="msg user"><div class="msg-avatar usr">U</div><div class="msg-bubble">${text}</div></div>`;
-  chatHistory.push({role:'user',content:text});input.value='';btn.disabled=true;
+  input.value='';btn.disabled=true;
   const tid='t_'+Date.now();
   container.innerHTML+=`<div class="msg bot" id="${tid}"><div class="msg-avatar bot">FA</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
   container.scrollTop=container.scrollHeight;
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:ABOUT,messages:chatHistory.slice(-10)})});
-    const data=await res.json();const reply=data.content?.[0]?.text||"Sorry, I couldn't get a response. Try again!";
-    chatHistory.push({role:'assistant',content:reply});
+  // Simulate thinking delay then show smart demo reply
+  setTimeout(()=>{
+    const reply = getDemoReply(text);
     document.getElementById(tid).outerHTML=`<div class="msg bot"><div class="msg-avatar bot">FA</div><div class="msg-bubble">${reply}</div></div>`;
-  }catch(e){document.getElementById(tid).outerHTML=`<div class="msg bot"><div class="msg-avatar bot">FA</div><div class="msg-bubble">Hmm, something went wrong. Try again in a moment!</div></div>`;}
-  btn.disabled=false;container.scrollTop=container.scrollHeight;
+    btn.disabled=false;
+    container.scrollTop=container.scrollHeight;
+  }, 1200);
 }
 document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
 
